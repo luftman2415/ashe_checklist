@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Checklist de Limpieza - ASHE S.A.S</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -27,8 +28,10 @@
         input[type="checkbox"] { transform: scale(1.4); accent-color: var(--success-color); }
         .section-title { margin-top: 30px; font-size: 1.3rem; color: var(--main-color); border-left: 6px solid var(--accent-color); padding-left: 15px; font-weight: 700; }
         .btn { display: block; width: 100%; background: linear-gradient(to right, var(--success-color), #218838); color: white; padding: 15px; font-size: 1.1rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 30px; }
+        .btn-secondary { background: linear-gradient(to right, var(--main-color), var(--accent-color)); margin-top: 15px; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); text-align: center; max-width: 450px; position: relative; animation: modalOpen 0.3s ease-out; }
+        .modal-content-large { max-width: 700px; }
         @keyframes modalOpen { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: #6c757d; cursor: pointer; }
         #qrModal .fa-check-circle { font-size: 3rem; color: var(--success-color); margin-bottom: 10px; }
@@ -39,10 +42,47 @@
         .char-count { color: var(--main-color); font-weight: bold; }
         .warning { color: var(--danger-color); }
         .success { color: var(--success-color); }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: #6c757d; }
+        .preview-content { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9rem; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+        .qr-details { margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem; border-left: 4px solid var(--main-color); }
+        .item-code { 
+            color: var(--accent-color); 
+            font-weight: bold; 
+            font-size: 0.8rem; 
+            background: rgba(0, 180, 216, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .btn-export {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-print {
+            background: var(--main-color);
+            color: white;
+        }
+        .btn-download {
+            background: var(--success-color);
+            color: white;
+        }
 
         @media (max-width: 600px) {
             .container { padding: 20px; }
             th, td { padding: 8px; font-size: 0.9rem; }
+            .modal-content { padding: 20px; margin: 20px; }
         }
     </style>
 <!-- Conexión con el Manifiesto de la PWA -->
@@ -62,15 +102,15 @@
         <label for="conductor">Nombre del Conductor:</label>
         <div class="input-group">
             <i class="fas fa-user"></i>
-            <input type="text" id="conductor" placeholder="Ej: Elkin Duke" maxlength="12" required>
-            <small id="conductorCount" class="char-count">0/12</small>
+            <input type="text" id="conductor" placeholder="Ej: Elkin Duke" maxlength="20" required>
+            <small id="conductorCount" class="char-count">0/20</small>
         </div>
         
-        <label for="placa">Placa del Vehículo (máx 7 caracteres):</label>
+        <label for="placa">Placa del Vehículo (máx 8 caracteres):</label>
         <div class="input-group">
             <i class="fas fa-car-side"></i>
-            <input type="text" id="placa" placeholder="Ej: WDX171" maxlength="7">
-            <small id="placaCount" class="char-count">0/7</small>
+            <input type="text" id="placa" placeholder="Ej: WDX171" maxlength="8">
+            <small id="placaCount" class="char-count">0/8</small>
         </div>
         
         <label for="datetime">Fecha y Hora de Revisión:</label>
@@ -79,32 +119,38 @@
         <div class="compression-info">
             <strong>Información del QR:</strong><br>
             Tamaño estimado: <span id="qrSize" class="char-count">0</span> caracteres<br>
-            Límite recomendado: <span class="success">400 caracteres</span><br>
+            Límite recomendado: <span class="success">500 caracteres</span><br>
             Estado: <span id="qrStatus" class="success">OK</span>
         </div>
         
         <h2 class="section-title"><i class="fas fa-tint"></i> Zona de Cabina</h2>
-        <table><thead><tr><th>Ítem</th><th>OK</th><th>Obs (máx 8)</th></tr></thead><tbody>
-            <tr><td>Tablero limpio</td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="8" onkeyup="updateQrSize()"></td></tr>
-            <tr><td>Volante limpio</td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="8" onkeyup="updateQrSize()"></td></tr>
-            <tr><td>Palanca de cambios</td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="8" onkeyup="updateQrSize()"></td></tr>
-            <tr><td>Asientos limpios</td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="8" onkeyup="updateQrSize()"></td></tr>
+        <table><thead><tr><th>Ítem</th><th>OK</th><th>Observaciones (máx 15)</th></tr></thead><tbody>
+            <tr><td>Tablero limpio <span class="item-code">(TAB)</span></td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="15" onkeyup="updateQrSize()"></td></tr>
+            <tr><td>Volante limpio <span class="item-code">(VOL)</span></td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="15" onkeyup="updateQrSize()"></td></tr>
+            <tr><td>Palanca de cambios <span class="item-code">(PAL)</span></td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="15" onkeyup="updateQrSize()"></td></tr>
+            <tr><td>Asientos limpios <span class="item-code">(ASI)</span></td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="15" onkeyup="updateQrSize()"></td></tr>
         </tbody></table>
         
         <h2 class="section-title"><i class="fas fa-glass-whiskey"></i> Vidrios y Espejos</h2>
-        <table><thead><tr><th>Ítem</th><th>OK</th><th>Obs (máx 8)</th></tr></thead><tbody>
-            <tr><td>Parabrisas limpio</td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="8" onkeyup="updateQrSize()"></td></tr>
-            <tr><td>Vidrios laterales limpios</td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="8" onkeyup="updateQrSize()"></td></tr>
+        <table><thead><tr><th>Ítem</th><th>OK</th><th>Observaciones (máx 15)</th></tr></thead><tbody>
+            <tr><td>Parabrisas limpio <span class="item-code">(PAR)</span></td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="15" onkeyup="updateQrSize()"></td></tr>
+            <tr><td>Vidrios laterales limpios <span class="item-code">(VID)</span></td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="15" onkeyup="updateQrSize()"></td></tr>
+            <tr><td>Espejos retrovisores <span class="item-code">(ESP)</span></td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="15" onkeyup="updateQrSize()"></td></tr>
         </tbody></table>
         
         <h2 class="section-title"><i class="fas fa-trash-alt"></i> Residuos y Desinfección</h2>
-        <table><thead><tr><th>Ítem</th><th>OK</th><th>Obs (máx 8)</th></tr></thead><tbody>
-            <tr><td>Sin basura visible</td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="8" onkeyup="updateQrSize()"></td></tr>
-            <tr><td>Superficies desinfectadas</td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="8" onkeyup="updateQrSize()"></td></tr>
+        <table><thead><tr><th>Ítem</th><th>OK</th><th>Observaciones (máx 15)</th></tr></thead><tbody>
+            <tr><td>Sin basura visible <span class="item-code">(BAS)</span></td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="15" onkeyup="updateQrSize()"></td></tr>
+            <tr><td>Superficies desinfectadas <span class="item-code">(DES)</span></td><td><input type="checkbox" onchange="updateQrSize()"></td><td><input type="text" name="observaciones" maxlength="15" onkeyup="updateQrSize()"></td></tr>
         </tbody></table>
         
+        <button type="button" class="btn btn-secondary" onclick="mostrarVistaPreviaReporte()"><i class="fas fa-eye"></i> Vista Previa del Reporte</button>
         <button type="button" class="btn" onclick="generarQR()"><i class="fas fa-qrcode"></i> Generar Código QR</button>
     </form>
+    
+    <div class="footer">
+        <p>&copy; 2025 ASHE S.A.S. Todos los derechos reservados.</p>
+    </div>
 </div>
 
 <div id="qrModal" class="modal">
@@ -112,10 +158,12 @@
         <span class="modal-close" onclick="cerrarModal('qrModal')"><i class="fas fa-times-circle"></i></span>
         <i class="fas fa-check-circle"></i>
         <h2 style="color:var(--success-color);">¡Código QR Generado!</h2>
-        <p>Escanea para ver el reporte completo</p>
+        <p>Escanea para ver el reporte completo con observaciones</p>
         <div id="qrcode"></div>
-        <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 0.8rem;">
-            Tamaño: <span id="finalQrSize"></span> caracteres
+        <div class="qr-details">
+            <strong>Detalles del QR:</strong><br>
+            Tamaño: <span id="finalQrSize"></span> caracteres<br>
+            Observaciones incluidas: <span id="observacionesCount">0</span>
         </div>
     </div>
 </div>
@@ -130,20 +178,38 @@
 </div>
 
 <div id="previewModal" class="modal">
-    <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-content modal-content-large">
         <span class="modal-close" onclick="cerrarModal('previewModal')"><i class="fas fa-times-circle"></i></span>
-        <h2>Vista Previa del Reporte</h2>
-        <div id="previewContent" style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap;"></div>
-        <button onclick="cerrarModal('previewModal'); generarQR();" style="margin-top: 15px; padding: 10px 20px; background: var(--success-color); color: white; border: none; border-radius: 5px; cursor: pointer;">Generar QR</button>
+        <h2><i class="fas fa-file-alt"></i> Vista Previa del Reporte</h2>
+        <div id="previewContent" class="preview-content"></div>
+        <div class="export-buttons">
+            <button class="btn-export btn-print" onclick="imprimirReporte()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            <button class="btn-export btn-download" onclick="exportarReporte()">
+                <i class="fas fa-download"></i> Exportar TXT
+            </button>
+        </div>
+        <button onclick="cerrarModal('previewModal'); generarQR();" style="margin-top: 15px; padding: 10px 20px; background: var(--success-color); color: white; border: none; border-radius: 5px; cursor: pointer;">
+            <i class="fas fa-qrcode"></i> Generar QR
+        </button>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
+    // Variables globales
+    const itemCodes = ['TAB', 'VOL', 'PAL', 'ASI', 'PAR', 'VID', 'ESP', 'BAS', 'DES'];
+    const itemNames = [
+        'Tablero limpio', 'Volante limpio', 'Palanca de cambios', 'Asientos limpios', 
+        'Parabrisas limpio', 'Vidrios laterales', 'Espejos retrovisores', 
+        'Sin basura visible', 'Superficies desinfectadas'
+    ];
+
     // Contadores de caracteres
     document.getElementById('conductor').addEventListener('input', function() {
         const count = this.value.length;
-        document.getElementById('conductorCount').textContent = count + '/15';
+        document.getElementById('conductorCount').textContent = count + '/20';
         updateQrSize();
     });
     
@@ -153,12 +219,12 @@
         updateQrSize();
     });
 
-    // Función para generar el contenido del QR optimizado
+    // Función para generar el contenido del QR con observaciones mejorada
     function generateQrContent() {
         const conductor = document.getElementById('conductor').value.trim() || "N/A";
         const placa = document.getElementById('placa').value.trim() || "N/A";
         
-        // Fecha manual sin caracteres especiales - formato DDMMHHMM
+        // Fecha optimizada - formato DDMMHHMM
         let fechaHora;
         if (document.getElementById('datetime').value) {
             const date = new Date(document.getElementById('datetime').value);
@@ -180,38 +246,42 @@
         function cleanText(text) {
             return text.replace(/[^\w\s.-]/g, '').replace(/\s+/g, ' ').trim();
         }
-
-        // Códigos ultra comprimidos (1 carácter)
-        const itemCodes = ['T', 'V', 'P', 'A', 'B', 'L', 'R', 'D'];
         
         const rows = document.querySelectorAll('tbody tr');
         let items = [];
+        let observacionesCount = 0;
         
         rows.forEach((row, index) => {
-            const checked = row.cells[1].querySelector('input[type="checkbox"]').checked;
-            let obs = cleanText(row.cells[2].querySelector('input[type="text"]').value.trim());
+            const checkbox = row.cells[1].querySelector('input[type="checkbox"]');
+            const obsInput = row.cells[2].querySelector('input[type="text"]');
             
-            // Solo incluir si hay observación O si está desmarcado
+            const checked = checkbox.checked;
+            let obs = cleanText(obsInput.value.trim());
+            
+            // Incluir ítem si: no está marcado O tiene observaciones
             if (!checked || obs) {
                 let item = itemCodes[index] + (checked ? '1' : '0');
                 if (obs && obs.length > 0) {
-                    item += ':' + obs.substring(0, 5); // Máximo 5 chars para obs
+                    item += ':' + obs.substring(0, 12); // Máximo 12 chars para observaciones
+                    observacionesCount++;
                 }
                 items.push(item);
             }
         });
 
-        // Limpiar nombres de caracteres especiales
-        const conductorLimpio = cleanText(conductor).substring(0, 12);
-        const placaLimpia = cleanText(placa).substring(0, 7);
+        // Limpiar nombres
+        const conductorLimpio = cleanText(conductor).substring(0, 18);
+        const placaLimpia = cleanText(placa).substring(0, 8);
 
-        // Estructura ultra comprimida
-        let content = `${conductorLimpio}|${placaLimpia}|${fechaHora}`;
+        // Estructura del QR: Conductor|Placa|Fecha|Items
+        let content = `ASHE-${conductorLimpio}|${placaLimpia}|${fechaHora}`;
         if (items.length > 0) {
             content += '|' + items.join(',');
+        } else {
+            content += '|OK'; // Todos los ítems están bien
         }
 
-        return content;
+        return { content, observacionesCount };
     }
 
     // Función para calcular el tamaño real en bytes
@@ -221,22 +291,22 @@
 
     // Función para actualizar el tamaño estimado del QR
     function updateQrSize() {
-        const content = generateQrContent();
+        const { content } = generateQrContent();
         const realSize = getByteSize(content);
         
         document.getElementById('qrSize').textContent = realSize;
         
         const statusElement = document.getElementById('qrStatus');
-        if (realSize <= 200) {
+        if (realSize <= 250) {
             statusElement.textContent = 'EXCELENTE';
             statusElement.className = 'success';
-        } else if (realSize <= 400) {
+        } else if (realSize <= 500) {
             statusElement.textContent = 'BUENO';
             statusElement.className = 'success';
-        } else if (realSize <= 600) {
+        } else if (realSize <= 700) {
             statusElement.textContent = 'ACEPTABLE';
             statusElement.className = 'char-count';
-        } else if (realSize <= 800) {
+        } else if (realSize <= 900) {
             statusElement.textContent = 'RIESGO MEDIO';
             statusElement.className = 'warning';
         } else {
@@ -252,13 +322,17 @@
             return;
         }
 
-        const content = generateQrContent();
+        const { content, observacionesCount } = generateQrContent();
         
         // Decodificar para mostrar legible
         const parts = content.split('|');
-        let preview = `ASHE S.A.S - Reporte de Limpieza\n\n`;
-        preview += `Conductor: ${parts[0]}\n`;
-        preview += `Placa: ${parts[1]}\n`;
+        let preview = `╔═══════════════════════════════════════════╗\n`;
+        preview += `║           ASHE S.A.S - REPORTE           ║\n`;
+        preview += `║        CHECKLIST DE LIMPIEZA             ║\n`;
+        preview += `╠═══════════════════════════════════════════╣\n\n`;
+        
+        preview += `👤 Conductor: ${parts[0].replace('ASHE-', '') || 'N/A'}\n`;
+        preview += `🚛 Placa: ${parts[1] || 'N/A'}\n`;
         
         // Decodificar fecha DDMMHHMM
         if (parts[2] && parts[2].length === 8) {
@@ -266,34 +340,58 @@
             const mm = parts[2].substring(2, 4);
             const hh = parts[2].substring(4, 6);
             const min = parts[2].substring(6, 8);
-            preview += `Fecha: ${dd}/${mm} ${hh}:${min}\n\n`;
-        } else {
-            preview += `Fecha: ${parts[2]}\n\n`;
+            preview += `📅 Fecha: ${dd}/${mm} a las ${hh}:${min}\n\n`;
         }
         
-        if (parts[3]) {
-            preview += `Ítems con observaciones o no verificados:\n`;
+        preview += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        
+        if (parts[3] && parts[3] !== 'OK') {
+            preview += `📋 ÍTEMS CON OBSERVACIONES/INCIDENCIAS:\n\n`;
             const items = parts[3].split(',');
-            const itemNames = ['Tablero', 'Volante', 'Palanca', 'Asientos', 'Parabrisas', 'Vidrios Lat.', 'Sin Basura', 'Desinfectado'];
             
             items.forEach(item => {
-                const code = item[0];
-                const status = item[1];
+                const code = item.substring(0, 3); // Ahora son 3 caracteres
+                const status = item[3];
                 const obs = item.includes(':') ? item.split(':')[1] : '';
-                const index = ['T', 'V', 'P', 'A', 'B', 'L', 'R', 'D'].indexOf(code);
+                const index = itemCodes.indexOf(code);
                 
                 if (index >= 0) {
-                    preview += `• ${itemNames[index]}: ${status === '1' ? '✓' : '✗'}`;
-                    if (obs) preview += ` (${obs})`;
-                    preview += '\n';
+                    const statusIcon = status === '1' ? '✅' : '❌';
+                    preview += `${statusIcon} ${itemNames[index]} (${code})`;
+                    if (obs) {
+                        preview += `\n   📝 Observación: "${obs}"`;
+                    }
+                    preview += '\n\n';
                 }
             });
+            
+            // Agregar resumen detallado de observaciones
+            const observacionesEncontradas = items.filter(item => item.includes(':')).map(item => {
+                const code = item.substring(0, 3);
+                const obs = item.split(':')[1];
+                return `${code}: "${obs}"`;
+            });
+            
+            if (observacionesEncontradas.length > 0) {
+                preview += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+                preview += `📝 DETALLE DE OBSERVACIONES:\n`;
+                observacionesEncontradas.forEach(obs => {
+                    preview += `• ${obs}\n`;
+                });
+                preview += '\n';
+            }
         } else {
-            preview += `✓ Todos los ítems verificados sin observaciones\n`;
+            preview += `✅ TODOS LOS ÍTEMS VERIFICADOS CORRECTAMENTE\n`;
+            preview += `   Sin observaciones ni incidencias\n\n`;
         }
         
-        preview += `\n--- Datos codificados ---\n${content}`;
-        preview += `\nTamaño real: ${getByteSize(content)} bytes`;
+        preview += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        preview += `📊 RESUMEN:\n`;
+        preview += `• Observaciones registradas: ${observacionesCount}\n`;
+        preview += `• Tamaño del QR: ${getByteSize(content)} bytes\n\n`;
+        
+        preview += `🔐 DATOS CODIFICADOS:\n${content}\n\n`;
+        preview += `© 2025 ASHE S.A.S - Todos los derechos reservados`;
         
         document.getElementById('previewContent').textContent = preview;
         document.getElementById('previewModal').style.display = 'flex';
@@ -306,33 +404,76 @@
             return;
         }
 
-        const qrContent = generateQrContent();
-        const realSize = getByteSize(qrContent);
+        const { content, observacionesCount } = generateQrContent();
+        const realSize = getByteSize(content);
         
         // Verificación de tamaño antes de generar
-        if (realSize > 700) {
-            mostrarAlerta(`El reporte es muy largo (${realSize} bytes). Por favor:\n• Acorta el nombre del conductor\n• Reduce las observaciones\n• Usa menos palabras`);
+        if (realSize > 800) {
+            mostrarAlerta(`El reporte es muy extenso (${realSize} bytes).\n\nPor favor:\n• Acorta el nombre del conductor\n• Reduce las observaciones\n• Usa abreviaciones\n\nLímite recomendado: 800 bytes`);
             return;
         }
 
         const qrDiv = document.getElementById('qrcode');
         qrDiv.innerHTML = '';
         document.getElementById('finalQrSize').textContent = realSize + ' bytes';
+        document.getElementById('observacionesCount').textContent = observacionesCount;
         document.getElementById('qrModal').style.display = 'flex';
 
         setTimeout(() => {
             try {
                 new QRCode(qrDiv, {
-                    text: qrContent,
+                    text: content,
                     width: 280,
                     height: 280,
                     correctLevel: QRCode.CorrectLevel.L
                 });
             } catch (error) {
                 cerrarModal('qrModal');
-                mostrarAlerta(`Error al generar QR: ${error.message}\nIntenta reducir más el contenido.`);
+                mostrarAlerta(`Error al generar QR: ${error.message}\n\nIntenta reducir más el contenido del reporte.`);
             }
         }, 100);
+    }
+
+    function imprimirReporte() {
+        const reportContent = document.getElementById('previewContent').textContent;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Reporte ASHE - Checklist de Limpieza</title>
+                    <style>
+                        body { font-family: 'Courier New', monospace; padding: 20px; }
+                        pre { white-space: pre-wrap; font-size: 12px; line-height: 1.4; }
+                        @media print {
+                            body { margin: 0; padding: 10px; }
+                            pre { font-size: 11px; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <pre>${reportContent}</pre>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+
+    function exportarReporte() {
+        const reportContent = document.getElementById('previewContent').textContent;
+        const conductor = document.getElementById('conductor').value.trim() || 'SinNombre';
+        const placa = document.getElementById('placa').value.trim() || 'SinPlaca';
+        const fecha = new Date().toISOString().slice(0, 10);
+        
+        const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ASHE_Reporte_${conductor}_${placa}_${fecha}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     }
     
     function mostrarAlerta(mensaje) {
@@ -344,7 +485,7 @@
         document.getElementById(modalId).style.display = 'none';
     }
 
-    // Inicializar
+    // Inicializar aplicación
     document.addEventListener('DOMContentLoaded', function() {
         // Establecer fecha/hora actual por defecto
         const now = new Date();
@@ -352,17 +493,27 @@
         document.getElementById('datetime').value = now.toISOString().slice(0, 16);
         
         updateQrSize();
+        
+        // Marcar todos los checkboxes por defecto
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        
+        updateQrSize();
     });
-</script>
-<script>
-  // Registrar el Service Worker para la funcionalidad offline
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js').then((reg) => {
-        console.log('Service worker registrado.', reg);
-      });
-    });
-  }
+
+    // Prevenir registro del Service Worker en entornos de desarrollo
+    // Solo se registra en producción real
+    if ('serviceWorker' in navigator && location.hostname !== 'localhost' && !location.hostname.includes('claudeusercontent')) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js').then((reg) => {
+                console.log('Service worker registrado.', reg);
+            }).catch((err) => {
+                console.log('Service worker no disponible en este entorno');
+            });
+        });
+    }
 </script>
 </body>
 </html>
