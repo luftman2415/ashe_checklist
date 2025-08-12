@@ -4,16 +4,17 @@
     <meta charset="UTF-8">
     <title>Checklist de Limpieza - ASHE S.A.S</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Código de Favicon y PWA Correcto -->
+    
+    <!-- Código de Favicon y PWA -->
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="manifest" href="site.webmanifest">
     <meta name="theme-color" content="#ffffff">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
@@ -35,7 +36,13 @@
         .btn { display: block; width: 100%; background: linear-gradient(to right, var(--success-color), #218838); color: white; padding: 15px; font-size: 1.1rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 30px; }
         .btn-secondary { background: linear-gradient(to right, var(--main-color), var(--accent-color)); margin-top: 15px; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.3); text-align: center; max-width: 450px; position: relative; animation: modalOpen 0.3s ease-out; width: 90%; box-sizing: border-box; }
+        .modal-content { 
+            background: white; padding: 40px; border-radius: 15px; 
+            box-shadow: 0 5px 25px rgba(0,0,0,0.3); text-align: center; 
+            position: relative; animation: modalOpen 0.3s ease-out; 
+            width: 90%; box-sizing: border-box;
+            max-height: 85vh; overflow-y: auto;
+        }
         .modal-content-large { max-width: 700px; }
         @keyframes modalOpen { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: #6c757d; cursor: pointer; }
@@ -45,12 +52,21 @@
         .warning { color: var(--danger-color); }
         .success { color: var(--success-color); }
         .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: #6c757d; }
-        .preview-content { text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 0.9rem; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
         .item-code { color: var(--accent-color); font-weight: bold; font-size: 0.8rem; background: rgba(0, 180, 216, 0.1); padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+        .preview-content { 
+            text-align: left; background: #f8f9fa; padding: 15px; 
+            border-radius: 8px; font-family: 'Courier New', monospace; 
+            font-size: 0.9rem; white-space: pre-wrap;
+        }
         .export-buttons { display: flex; gap: 10px; margin-top: 15px; justify-content: center; }
         .btn-export { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
         .btn-print { background: var(--main-color); color: white; }
         .btn-download { background: var(--success-color); color: white; }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .modal-content { padding: 20px; }
+        }
     </style>
 </head>
 <body>
@@ -77,7 +93,7 @@
         
         <div class="compression-info">
             <strong>Información del QR:</strong><br>
-            Tamaño estimado: <span id="qrSize" class="char-count">0</span> caracteres<br>
+            Tamaño estimado: <span id="qrSize" class="char-count">0</span> bytes<br>
             Estado: <span id="qrStatus" class="success">OK</span>
         </div>
         
@@ -117,9 +133,7 @@
         <i class="fas fa-check-circle"></i>
         <h2 style="color:var(--success-color);">¡Código QR Generado!</h2>
         <div id="qrcode"></div>
-        <div class="qr-details" style="font-size: 0.8rem;">
-            Tamaño: <span id="finalQrSize"></span>
-        </div>
+        <div style="font-size: 0.8rem; margin-top:15px;">Tamaño: <span id="finalQrSize"></span></div>
     </div>
 </div>
 
@@ -153,13 +167,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- ======================================================= -->
-<!-- INICIO: BLOQUE DE JAVASCRIPT COMPLETO Y CORREGIDO -->
+<!-- INICIO: BLOQUE DE JAVASCRIPT COMPLETO Y RESTAURADO -->
 <!-- ======================================================= -->
 <script>
     const itemCodes = ['TAB', 'VOL', 'PAL', 'ASI', 'PAR', 'VID', 'ESP', 'BAS', 'DES'];
     const itemNames = [
         'Tablero limpio', 'Volante limpio', 'Palanca de cambios', 'Asientos limpios', 
-        'Parabrisas limpio', 'Vidrios laterales', 'Espejos retrovisores', 
+        'Parabrisas limpio', 'Vidrios laterales limpios', 'Espejos retrovisores', 
         'Sin basura visible', 'Superficies desinfectadas'
     ];
 
@@ -186,9 +200,7 @@
             fechaHora = `${String(date.getDate()).padStart(2,'0')}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
         }
 
-        function cleanText(text) {
-            return text.replace(/[^\w\s.-]/g, '').replace(/\s+/g, ' ').trim();
-        }
+        function cleanText(text) { return text.replace(/[^\w\s.-]/g, '').replace(/\s+/g, ' ').trim(); }
         
         const rows = document.querySelectorAll('tbody tr');
         let items = [];
@@ -236,49 +248,62 @@
     }
 
     function mostrarVistaPreviaReporte() {
-        const conductor = document.getElementById('conductor').value.trim();
-        if (!conductor) {
+        if (!document.getElementById('conductor').value.trim()) {
             mostrarAlerta("Por favor, ingresa el nombre del conductor.");
             return;
         }
 
-        const { content } = generateQrContent();
+        const { content, observacionesCount } = generateQrContent();
         const parts = content.split('|');
-        let preview = `ASHE S.A.S - REPORTE DE LIMPIEZA\n`;
-        preview += `=====================================\n`;
-        preview += `Conductor: ${parts[0].replace('ASHE-', '')}\n`;
-        preview += `Placa: ${parts[1]}\n`;
+        let preview = `╔═══════════════════════════════════════════╗\n`;
+        preview += `║           ASHE S.A.S - REPORTE           ║\n`;
+        preview += `║        CHECKLIST DE LIMPIEZA             ║\n`;
+        preview += `╠═══════════════════════════════════════════╣\n\n`;
+        preview += `👤 Conductor: ${parts[0].replace('ASHE-', '')}\n`;
+        preview += `🚛 Placa: ${parts[1]}\n`;
         
         if (parts[2] && parts[2].length === 8) {
             const [dd, mm, hh, min] = [parts[2].substring(0,2), parts[2].substring(2,4), parts[2].substring(4,6), parts[2].substring(6,8)];
-            preview += `Fecha: ${dd}/${mm} a las ${hh}:${min}\n`;
+            preview += `📅 Fecha: ${dd}/${mm} a las ${hh}:${min}\n\n`;
         }
-        preview += `-------------------------------------\n`;
         
+        preview += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
         if (parts[3] && parts[3] !== 'OK') {
-            preview += `Incidencias/Observaciones:\n`;
+            preview += `📋 ÍTEMS CON OBSERVACIONES/INCIDENCIAS:\n\n`;
             parts[3].split(',').forEach(item => {
                 const code = item.substring(0,3);
                 const status = item[3];
                 const obs = item.includes(':') ? item.split(':')[1] : '';
                 const index = itemCodes.indexOf(code);
                 if (index >= 0) {
-                    preview += `• ${itemNames[index]}: ${status === '1' ? '✓ OK' : '✗ NO OK'}${obs ? ` (${obs})` : ''}\n`;
+                    const statusIcon = status === '1' ? '✅' : '❌';
+                    preview += `${statusIcon} ${itemNames[index]} (${code})`;
+                    if (obs) {
+                        preview += `\n   📝 Observación: "${obs}"`;
+                    }
+                    preview += '\n\n';
                 }
             });
         } else {
-            preview += `✓ Todos los ítems verificados sin observaciones.\n`;
+            preview += `✅ TODOS LOS ÍTEMS VERIFICADOS CORRECTAMENTE\n\n`;
         }
+        
+        preview += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        preview += `📊 RESUMEN:\n`;
+        preview += `• Observaciones registradas: ${observacionesCount}\n`;
+        preview += `• Tamaño del QR: ${getByteSize(content)} bytes\n\n`;
+        preview += `© 2025 ASHE S.A.S`;
+        
         document.getElementById('previewContent').textContent = preview;
         document.getElementById('previewModal').style.display = 'flex';
     }
 
     function generarQR() {
-        const { content, observacionesCount } = generateQrContent();
+        const { content } = generateQrContent();
         const realSize = getByteSize(content);
         
-        if (realSize > 800) {
-            mostrarAlerta(`Reporte muy extenso (${realSize} bytes). Acorte las observaciones.`);
+        if (realSize > 1000) {
+            mostrarAlerta(`Reporte muy extenso (${realSize} bytes).`);
             return;
         }
 
@@ -297,7 +322,7 @@
             }
         }, 100);
     }
-
+    
     function imprimirReporte() {
         const reportContent = document.getElementById('previewContent').textContent;
         const printWindow = window.open('', '_blank');
@@ -344,7 +369,7 @@
       navigator.serviceWorker.register('service-worker.js').then((reg) => {
         console.log('Service worker listo para funcionar en la web.', reg);
       }).catch(err => {
-        console.log('Registro de Service Worker falló (esto es esperado en pruebas locales):', err);
+        console.log('Registro de Service Worker falló (esperado en pruebas locales):', err);
       });
     });
   }
