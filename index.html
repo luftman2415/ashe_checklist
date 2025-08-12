@@ -45,20 +45,28 @@
             th, td { padding: 8px; font-size: 0.9rem; }
         }
     </style>
+<!-- Conexión con el Manifiesto de la PWA -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Ícono para dispositivos Apple -->
+<link rel="apple-touch-icon" href="icon-512x512.png">
+
+<!-- Color de la barra de estado del navegador en móviles -->
+<meta name="theme-color" content="#0077b6"/>
 </head>
 <body>
 
 <div class="container">
     <h1><i class="fas fa-truck-moving"></i> Checklist de Limpieza</h1>
     <form id="checklistForm">
-        <label for="conductor">Nombre del Conductor (máx 12 chars, sin acentos):</label>
+        <label for="conductor">Nombre del Conductor:</label>
         <div class="input-group">
             <i class="fas fa-user"></i>
             <input type="text" id="conductor" placeholder="Ej: Elkin Duke" maxlength="12" required>
             <small id="conductorCount" class="char-count">0/12</small>
         </div>
         
-        <label for="placa">Placa del Vehículo (máx 7 chars):</label>
+        <label for="placa">Placa del Vehículo (máx 7 caracteres):</label>
         <div class="input-group">
             <i class="fas fa-car-side"></i>
             <input type="text" id="placa" placeholder="Ej: WDX171" maxlength="7">
@@ -346,6 +354,15 @@
         updateQrSize();
     });
 </script>
-
+<script>
+  // Registrar el Service Worker para la funcionalidad offline
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').then((reg) => {
+        console.log('Service worker registrado.', reg);
+      });
+    });
+  }
+</script>
 </body>
 </html>

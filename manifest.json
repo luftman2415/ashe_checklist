@@ -1,0 +1,16 @@
+{
+  "name": "ASHE Checklist",
+  "short_name": "Checklist",
+  "description": "Checklist de limpieza para vehículos de ASHE S.A.S.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#e9ecef",
+  "theme_color": "#0077b6",
+  "icons": [
+    {
+      "src": "icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
