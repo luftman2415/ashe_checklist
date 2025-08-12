@@ -172,9 +172,166 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- ======================================================= -->
+<!-- INICIO: BLOQUE DE JAVASCRIPT COMPLETO Y RESTAURADO -->
+<!-- ======================================================= -->
 <script>
     const itemCodes = ['TAB', 'VOL', 'PAL', 'ASI', 'PAR', 'VID', 'ESP', 'BAS', 'DES'];
     const itemNames = [
         'Tablero limpio', 'Volante limpio', 'Palanca de cambios', 'Asientos limpios', 
         'Parabrisas limpio', 'Vidrios laterales limpios', 'Espejos retrovisores', 
-  
+        'Sin basura visible', 'Superficies desinfectadas'
+    ];
+
+    document.getElementById('conductor').addEventListener('input', function() {
+        document.getElementById('conductorCount').textContent = this.value.length + '/20';
+        updateQrSize();
+    });
+    
+    document.getElementById('placa').addEventListener('input', function() {
+        document.getElementById('placaCount').textContent = this.value.length + '/8';
+        updateQrSize();
+    });
+
+    function generateQrContent() {
+        const conductor = document.getElementById('conductor').value.trim() || "N/A";
+        const placa = document.getElementById('placa').value.trim() || "N/A";
+        
+        let fechaHora;
+        if (document.getElementById('datetime').value) {
+            const date = new Date(document.getElementById('datetime').value);
+            fechaHora = `${String(date.getDate()).padStart(2,'0')}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
+        } else {
+            const date = new Date();
+            fechaHora = `${String(date.getDate()).padStart(2,'0')}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
+        }
+
+        function cleanText(text) { return text.replace(/[^\w\s.-]/g, '').replace(/\s+/g, ' ').trim(); }
+        
+        const rows = document.querySelectorAll('tbody tr');
+        let items = [];
+        let observacionesCount = 0;
+        
+        rows.forEach((row, index) => {
+            const checked = row.cells[1].querySelector('input[type="checkbox"]').checked;
+            let obs = cleanText(row.cells[2].querySelector('input[type="text"]').value.trim());
+            
+            if (!checked || obs) {
+                let item = itemCodes[index] + (checked ? '1' : '0');
+                if (obs) {
+                    item += ':' + obs.substring(0, 15);
+                    observacionesCount++;
+                }
+                items.push(item);
+            }
+        });
+
+        const conductorLimpio = cleanText(conductor).substring(0, 20);
+        const placaLimpia = cleanText(placa).substring(0, 8);
+        let content = `ASHE-${conductorLimpio}|${placaLimpia}|${fechaHora}`;
+        if (items.length > 0) {
+            content += '|' + items.join(',');
+        } else {
+            content += '|OK';
+        }
+        return { content, observacionesCount };
+    }
+
+    function getByteSize(str) { return new Blob([str]).size; }
+
+    function updateQrSize() {
+        const { content } = generateQrContent();
+        const realSize = getByteSize(content);
+        document.getElementById('qrSize').textContent = realSize;
+        const statusElement = document.getElementById('qrStatus');
+        if (realSize <= 250) {
+            statusElement.textContent = 'EXCELENTE'; statusElement.className = 'success';
+        } else if (realSize <= 500) {
+            statusElement.textContent = 'BUENO'; statusElement.className = 'success';
+        } else if (realSize <= 700) {
+            statusElement.textContent = 'ACEPTABLE'; statusElement.className = 'char-count';
+        } else {
+            statusElement.textContent = 'ALTO'; statusElement.className = 'warning';
+        }
+    }
+
+    function mostrarVistaPreviaReporte() {
+        if (!document.getElementById('conductor').value.trim()) {
+            mostrarAlerta("Por favor, ingresa el nombre del conductor.");
+            return;
+        }
+
+        const { content, observacionesCount } = generateQrContent();
+        const parts = content.split('|');
+        let preview = `╔═══════════════════════════════════════════╗\n`;
+        preview += `║           ASHE S.A.S - REPORTE           ║\n`;
+        preview += `║        CHECKLIST DE LIMPIEZA             ║\n`;
+        preview += `╠═══════════════════════════════════════════╣\n\n`;
+        preview += `👤 Conductor: ${parts[0].replace('ASHE-', '')}\n`;
+        preview += `🚛 Placa: ${parts[1]}\n`;
+        
+        if (parts[2] && parts[2].length === 8) {
+            const [dd, mm, hh, min] = [parts[2].substring(0,2), parts[2].substring(2,4), parts[2].substring(4,6), parts[2].substring(6,8)];
+            preview += `📅 Fecha: ${dd}/${mm} a las ${hh}:${min}\n\n`;
+        }
+        
+        preview += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        if (parts[3] && parts[3] !== 'OK') {
+            preview += `📋 ÍTEMS CON OBSERVACIONES/INCIDENCIAS:\n\n`;
+            parts[3].split(',').forEach(item => {
+                const code = item.substring(0,3);
+                const status = item[3];
+                const obs = item.includes(':') ? item.split(':')[1] : '';
+                const index = itemCodes.indexOf(code);
+                if (index >= 0) {
+                    const statusIcon = status === '1' ? '✅' : '❌';
+                    preview += `${statusIcon} ${itemNames[index]} (${code})`;
+                    if (obs) {
+                        preview += `\n   📝 Observación: "${obs}"`;
+                    }
+                    preview += '\n\n';
+                }
+            });
+        } else {
+            preview += `✅ TODOS LOS ÍTEMS VERIFICADOS CORRECTAMENTE\n\n`;
+        }
+        
+        preview += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        preview += `📊 RESUMEN:\n`;
+        preview += `• Observaciones registradas: ${observacionesCount}\n`;
+        preview += `• Tamaño del QR: ${getByteSize(content)} bytes\n\n`;
+        preview += `© 2025 ASHE S.A.S`;
+        
+        document.getElementById('previewContent').textContent = preview;
+        document.getElementById('previewModal').style.display = 'flex';
+    }
+
+    function generarQR() {
+        const { content } = generateQrContent();
+        const realSize = getByteSize(content);
+        
+        if (realSize > 1000) {
+            mostrarAlerta(`Reporte demasiado extenso (${realSize} bytes).`);
+            return;
+        }
+
+        const qrDiv = document.getElementById('qrcode');
+        qrDiv.innerHTML = '';
+        document.getElementById('finalQrSize').textContent = `${realSize} bytes`;
+        document.getElementById('qrModal').style.display = 'flex';
+
+        setTimeout(() => {
+            let qrSize = window.innerWidth < 600 ? 220 : 280;
+            try {
+                new QRCode(qrDiv, { text: content, width: qrSize, height: qrSize, correctLevel: QRCode.CorrectLevel.L });
+            } catch (error) {
+                cerrarModal('qrModal');
+                mostrarAlerta(`Error al generar QR: ${error.message}`);
+            }
+        }, 100);
+    }
+    
+    function imprimirReporte() {
+        const reportContent = document.getElementById('previewContent').textContent;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`<html><head><title>Reporte ASHE</titl
