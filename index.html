@@ -9,16 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- ======================================================= -->
-    <!-- INICIO: CÓDIGO DEL FAVICON Y PWA (CORREGIDO PARA TUS ARCHIVOS) -->
-    <!-- ======================================================= -->
+    <!-- Código de Favicon y PWA Correcto -->
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="manifest" href="site.webmanifest">
     <meta name="theme-color" content="#ffffff">
-    <!-- ======================================================= -->
-    <!-- FIN: CÓDIGO DEL FAVICON Y PWA -->
-    <!-- ======================================================= -->
     
     <style>
         :root {
@@ -26,7 +21,7 @@
             --border-color: #dee2e6; --success-color: #28a745; --danger-color: #dc3545;
         }
         body { font-family: 'Roboto', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; color: #343a40; line-height: 1.6; }
-        .container { max-width: 960px; margin: auto; background: #ffffff; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); animation: fadeIn 1s ease-in-out; }
+        .container { max-width: 960px; margin: auto; background: #ffffff; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); }
         h1 { text-align: center; color: var(--main-color); margin-bottom: 25px; font-weight: 700; }
         label { font-weight: 700; display: block; margin-top: 20px; color: var(--main-color); }
         .input-group { position: relative; margin-bottom: 15px; }
@@ -56,11 +51,6 @@
         .btn-export { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
         .btn-print { background: var(--main-color); color: white; }
         .btn-download { background: var(--success-color); color: white; }
-
-        @media (max-width: 600px) {
-            .container { padding: 20px; }
-            .modal-content { padding: 20px; }
-        }
     </style>
 </head>
 <body>
@@ -121,21 +111,233 @@
     </div>
 </div>
 
-<!-- Modales -->
 <div id="qrModal" class="modal">
-    <!-- ... (contenido de modales sin cambios) ... -->
+    <div class="modal-content">
+        <span class="modal-close" onclick="cerrarModal('qrModal')"><i class="fas fa-times-circle"></i></span>
+        <i class="fas fa-check-circle"></i>
+        <h2 style="color:var(--success-color);">¡Código QR Generado!</h2>
+        <div id="qrcode"></div>
+        <div class="qr-details" style="font-size: 0.8rem;">
+            Tamaño: <span id="finalQrSize"></span>
+        </div>
+    </div>
 </div>
+
 <div id="alertModal" class="modal">
-    <!-- ... (contenido de modales sin cambios) ... -->
+    <div class="modal-content">
+        <span class="modal-close" onclick="cerrarModal('alertModal')"><i class="fas fa-times-circle"></i></span>
+        <i class="fas fa-exclamation-triangle"></i>
+        <h2 style="color:var(--danger-color);" id="alertTitle">Atención</h2>
+        <p id="alertMessage"></p>
+    </div>
 </div>
+
 <div id="previewModal" class="modal">
-    <!-- ... (contenido de modales sin cambios) ... -->
+    <div class="modal-content modal-content-large">
+        <span class="modal-close" onclick="cerrarModal('previewModal')"><i class="fas fa-times-circle"></i></span>
+        <h2><i class="fas fa-file-alt"></i> Vista Previa del Reporte</h2>
+        <div id="previewContent" class="preview-content"></div>
+        <div class="export-buttons">
+            <button class="btn-export btn-print" onclick="imprimirReporte()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            <button class="btn-export btn-download" onclick="exportarReporte()">
+                <i class="fas fa-download"></i> Exportar TXT
+            </button>
+        </div>
+        <button onclick="cerrarModal('previewModal'); generarQR();" style="margin-top: 15px; padding: 10px 20px; background: var(--success-color); color: white; border: none; border-radius: 5px; cursor: pointer;">
+            <i class="fas fa-qrcode"></i> Confirmar y Generar QR
+        </button>
+    </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!-- ======================================================= -->
+<!-- INICIO: BLOQUE DE JAVASCRIPT COMPLETO Y CORREGIDO -->
+<!-- ======================================================= -->
 <script>
-    // ... (El bloque de JavaScript no necesita cambios) ...
+    const itemCodes = ['TAB', 'VOL', 'PAL', 'ASI', 'PAR', 'VID', 'ESP', 'BAS', 'DES'];
+    const itemNames = [
+        'Tablero limpio', 'Volante limpio', 'Palanca de cambios', 'Asientos limpios', 
+        'Parabrisas limpio', 'Vidrios laterales', 'Espejos retrovisores', 
+        'Sin basura visible', 'Superficies desinfectadas'
+    ];
+
+    document.getElementById('conductor').addEventListener('input', function() {
+        document.getElementById('conductorCount').textContent = this.value.length + '/20';
+        updateQrSize();
+    });
+    
+    document.getElementById('placa').addEventListener('input', function() {
+        document.getElementById('placaCount').textContent = this.value.length + '/8';
+        updateQrSize();
+    });
+
+    function generateQrContent() {
+        const conductor = document.getElementById('conductor').value.trim() || "N/A";
+        const placa = document.getElementById('placa').value.trim() || "N/A";
+        
+        let fechaHora;
+        if (document.getElementById('datetime').value) {
+            const date = new Date(document.getElementById('datetime').value);
+            fechaHora = `${String(date.getDate()).padStart(2,'0')}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
+        } else {
+            const date = new Date();
+            fechaHora = `${String(date.getDate()).padStart(2,'0')}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}`;
+        }
+
+        function cleanText(text) {
+            return text.replace(/[^\w\s.-]/g, '').replace(/\s+/g, ' ').trim();
+        }
+        
+        const rows = document.querySelectorAll('tbody tr');
+        let items = [];
+        let observacionesCount = 0;
+        
+        rows.forEach((row, index) => {
+            const checked = row.cells[1].querySelector('input[type="checkbox"]').checked;
+            let obs = cleanText(row.cells[2].querySelector('input[type="text"]').value.trim());
+            
+            if (!checked || obs) {
+                let item = itemCodes[index] + (checked ? '1' : '0');
+                if (obs) {
+                    item += ':' + obs.substring(0, 15);
+                    observacionesCount++;
+                }
+                items.push(item);
+            }
+        });
+
+        const conductorLimpio = cleanText(conductor).substring(0, 20);
+        const placaLimpia = cleanText(placa).substring(0, 8);
+        let content = `ASHE-${conductorLimpio}|${placaLimpia}|${fechaHora}`;
+        if (items.length > 0) {
+            content += '|' + items.join(',');
+        } else {
+            content += '|OK';
+        }
+        return { content, observacionesCount };
+    }
+
+    function getByteSize(str) { return new Blob([str]).size; }
+
+    function updateQrSize() {
+        const { content } = generateQrContent();
+        const realSize = getByteSize(content);
+        document.getElementById('qrSize').textContent = realSize;
+        const statusElement = document.getElementById('qrStatus');
+        if (realSize <= 500) {
+            statusElement.textContent = 'OK';
+            statusElement.className = 'success';
+        } else {
+            statusElement.textContent = 'ALTO';
+            statusElement.className = 'warning';
+        }
+    }
+
+    function mostrarVistaPreviaReporte() {
+        const conductor = document.getElementById('conductor').value.trim();
+        if (!conductor) {
+            mostrarAlerta("Por favor, ingresa el nombre del conductor.");
+            return;
+        }
+
+        const { content } = generateQrContent();
+        const parts = content.split('|');
+        let preview = `ASHE S.A.S - REPORTE DE LIMPIEZA\n`;
+        preview += `=====================================\n`;
+        preview += `Conductor: ${parts[0].replace('ASHE-', '')}\n`;
+        preview += `Placa: ${parts[1]}\n`;
+        
+        if (parts[2] && parts[2].length === 8) {
+            const [dd, mm, hh, min] = [parts[2].substring(0,2), parts[2].substring(2,4), parts[2].substring(4,6), parts[2].substring(6,8)];
+            preview += `Fecha: ${dd}/${mm} a las ${hh}:${min}\n`;
+        }
+        preview += `-------------------------------------\n`;
+        
+        if (parts[3] && parts[3] !== 'OK') {
+            preview += `Incidencias/Observaciones:\n`;
+            parts[3].split(',').forEach(item => {
+                const code = item.substring(0,3);
+                const status = item[3];
+                const obs = item.includes(':') ? item.split(':')[1] : '';
+                const index = itemCodes.indexOf(code);
+                if (index >= 0) {
+                    preview += `• ${itemNames[index]}: ${status === '1' ? '✓ OK' : '✗ NO OK'}${obs ? ` (${obs})` : ''}\n`;
+                }
+            });
+        } else {
+            preview += `✓ Todos los ítems verificados sin observaciones.\n`;
+        }
+        document.getElementById('previewContent').textContent = preview;
+        document.getElementById('previewModal').style.display = 'flex';
+    }
+
+    function generarQR() {
+        const { content, observacionesCount } = generateQrContent();
+        const realSize = getByteSize(content);
+        
+        if (realSize > 800) {
+            mostrarAlerta(`Reporte muy extenso (${realSize} bytes). Acorte las observaciones.`);
+            return;
+        }
+
+        const qrDiv = document.getElementById('qrcode');
+        qrDiv.innerHTML = '';
+        document.getElementById('finalQrSize').textContent = `${realSize} bytes`;
+        document.getElementById('qrModal').style.display = 'flex';
+
+        setTimeout(() => {
+            let qrSize = window.innerWidth < 600 ? 220 : 280;
+            try {
+                new QRCode(qrDiv, { text: content, width: qrSize, height: qrSize, correctLevel: QRCode.CorrectLevel.L });
+            } catch (error) {
+                cerrarModal('qrModal');
+                mostrarAlerta(`Error al generar QR: ${error.message}`);
+            }
+        }, 100);
+    }
+
+    function imprimirReporte() {
+        const reportContent = document.getElementById('previewContent').textContent;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`<html><head><title>Reporte ASHE</title><style>body{font-family:'Courier New',monospace;}pre{white-space:pre-wrap;}</style></head><body><pre>${reportContent}</pre></body></html>`);
+        printWindow.document.close();
+        printWindow.print();
+    }
+
+    function exportarReporte() {
+        const reportContent = document.getElementById('previewContent').textContent;
+        const filename = `ASHE_Reporte_${document.getElementById('conductor').value.trim()}_${new Date().toISOString().slice(0,10)}.txt`;
+        const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.click();
+        window.URL.revokeObjectURL(url);
+    }
+    
+    function mostrarAlerta(mensaje) {
+        document.getElementById('alertMessage').innerText = mensaje;
+        document.getElementById('alertModal').style.display = 'flex';
+    }
+
+    function cerrarModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('datetime').value = now.toISOString().slice(0, 16);
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+        updateQrSize();
+    });
 </script>
+<!-- ======================================================= -->
+<!-- FIN: BLOQUE DE JAVASCRIPT -->
+<!-- ======================================================= -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
