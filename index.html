@@ -36,14 +36,31 @@
         .btn { display: block; width: 100%; background: linear-gradient(to right, var(--success-color), #218838); color: white; padding: 15px; font-size: 1.1rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; margin-top: 30px; }
         .btn-secondary { background: linear-gradient(to right, var(--main-color), var(--accent-color)); margin-top: 15px; }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+        
+        /* ======================================================= */
+        /* INICIO: CSS DE MODALES UNIFICADO Y CORREGIDO */
+        /* ======================================================= */
         .modal-content { 
-            background: white; padding: 40px; border-radius: 15px; 
-            box-shadow: 0 5px 25px rgba(0,0,0,0.3); text-align: center; 
-            position: relative; animation: modalOpen 0.3s ease-out; 
-            width: 90%; box-sizing: border-box;
-            max-height: 85vh; overflow-y: auto;
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; /* APLICA EL REDONDEO A TODOS */
+            box-shadow: 0 5px 25px rgba(0,0,0,0.3); 
+            text-align: center; 
+            position: relative; 
+            animation: modalOpen 0.3s ease-out;
+            width: 90%; /* Ancho flexible para responsividad */
+            box-sizing: border-box;
+            max-height: 85vh; /* Altura máxima para evitar desbordamiento vertical */
+            overflow-y: auto; /* Scroll si el contenido es muy alto */
         }
+        
+        /* Modificadores de ancho que no afectan el diseño base */
+        .modal-content-small { max-width: 450px; }
         .modal-content-large { max-width: 700px; }
+        /* ======================================================= */
+        /* FIN: CSS DE MODALES */
+        /* ======================================================= */
+
         @keyframes modalOpen { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         .modal-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: #6c757d; cursor: pointer; }
         #qrcode { margin-top: 20px; display: flex; justify-content: center; }
@@ -56,7 +73,7 @@
         .preview-content { 
             text-align: left; background: #f8f9fa; padding: 15px; 
             border-radius: 8px; font-family: 'Courier New', monospace; 
-            font-size: 0.9rem; white-space: pre-wrap;
+            font-size: 0.9rem; white-space: pre-wrap; 
         }
         .export-buttons { display: flex; gap: 10px; margin-top: 15px; justify-content: center; }
         .btn-export { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
@@ -128,7 +145,7 @@
 </div>
 
 <div id="qrModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content modal-content-small">
         <span class="modal-close" onclick="cerrarModal('qrModal')"><i class="fas fa-times-circle"></i></span>
         <i class="fas fa-check-circle"></i>
         <h2 style="color:var(--success-color);">¡Código QR Generado!</h2>
@@ -138,7 +155,7 @@
 </div>
 
 <div id="alertModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content modal-content-small">
         <span class="modal-close" onclick="cerrarModal('alertModal')"><i class="fas fa-times-circle"></i></span>
         <i class="fas fa-exclamation-triangle"></i>
         <h2 style="color:var(--danger-color);" id="alertTitle">Atención</h2>
@@ -166,9 +183,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<!-- ======================================================= -->
-<!-- INICIO: BLOQUE DE JAVASCRIPT COMPLETO Y RESTAURADO -->
-<!-- ======================================================= -->
 <script>
     const itemCodes = ['TAB', 'VOL', 'PAL', 'ASI', 'PAR', 'VID', 'ESP', 'BAS', 'DES'];
     const itemNames = [
@@ -263,116 +277,4 @@
         preview += `🚛 Placa: ${parts[1]}\n`;
         
         if (parts[2] && parts[2].length === 8) {
-            const [dd, mm, hh, min] = [parts[2].substring(0,2), parts[2].substring(2,4), parts[2].substring(4,6), parts[2].substring(6,8)];
-            preview += `📅 Fecha: ${dd}/${mm} a las ${hh}:${min}\n\n`;
-        }
-        
-        preview += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        if (parts[3] && parts[3] !== 'OK') {
-            preview += `📋 ÍTEMS CON OBSERVACIONES/INCIDENCIAS:\n\n`;
-            parts[3].split(',').forEach(item => {
-                const code = item.substring(0,3);
-                const status = item[3];
-                const obs = item.includes(':') ? item.split(':')[1] : '';
-                const index = itemCodes.indexOf(code);
-                if (index >= 0) {
-                    const statusIcon = status === '1' ? '✅' : '❌';
-                    preview += `${statusIcon} ${itemNames[index]} (${code})`;
-                    if (obs) {
-                        preview += `\n   📝 Observación: "${obs}"`;
-                    }
-                    preview += '\n\n';
-                }
-            });
-        } else {
-            preview += `✅ TODOS LOS ÍTEMS VERIFICADOS CORRECTAMENTE\n\n`;
-        }
-        
-        preview += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-        preview += `📊 RESUMEN:\n`;
-        preview += `• Observaciones registradas: ${observacionesCount}\n`;
-        preview += `• Tamaño del QR: ${getByteSize(content)} bytes\n\n`;
-        preview += `© 2025 ASHE S.A.S`;
-        
-        document.getElementById('previewContent').textContent = preview;
-        document.getElementById('previewModal').style.display = 'flex';
-    }
-
-    function generarQR() {
-        const { content } = generateQrContent();
-        const realSize = getByteSize(content);
-        
-        if (realSize > 1000) {
-            mostrarAlerta(`Reporte muy extenso (${realSize} bytes).`);
-            return;
-        }
-
-        const qrDiv = document.getElementById('qrcode');
-        qrDiv.innerHTML = '';
-        document.getElementById('finalQrSize').textContent = `${realSize} bytes`;
-        document.getElementById('qrModal').style.display = 'flex';
-
-        setTimeout(() => {
-            let qrSize = window.innerWidth < 600 ? 220 : 280;
-            try {
-                new QRCode(qrDiv, { text: content, width: qrSize, height: qrSize, correctLevel: QRCode.CorrectLevel.L });
-            } catch (error) {
-                cerrarModal('qrModal');
-                mostrarAlerta(`Error al generar QR: ${error.message}`);
-            }
-        }, 100);
-    }
-    
-    function imprimirReporte() {
-        const reportContent = document.getElementById('previewContent').textContent;
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`<html><head><title>Reporte ASHE</title><style>body{font-family:'Courier New',monospace;}pre{white-space:pre-wrap;}</style></head><body><pre>${reportContent}</pre></body></html>`);
-        printWindow.document.close();
-        printWindow.print();
-    }
-
-    function exportarReporte() {
-        const reportContent = document.getElementById('previewContent').textContent;
-        const filename = `ASHE_Reporte_${document.getElementById('conductor').value.trim()}_${new Date().toISOString().slice(0,10)}.txt`;
-        const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.click();
-        window.URL.revokeObjectURL(url);
-    }
-    
-    function mostrarAlerta(mensaje) {
-        document.getElementById('alertMessage').innerText = mensaje;
-        document.getElementById('alertModal').style.display = 'flex';
-    }
-
-    function cerrarModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        document.getElementById('datetime').value = now.toISOString().slice(0, 16);
-        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
-        updateQrSize();
-    });
-</script>
-<!-- ======================================================= -->
-<!-- FIN: BLOQUE DE JAVASCRIPT -->
-<!-- ======================================================= -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js').then((reg) => {
-        console.log('Service worker listo para funcionar en la web.', reg);
-      }).catch(err => {
-        console.log('Registro de Service Worker falló (esperado en pruebas locales):', err);
-      });
-    });
-  }
-</script>
-</body>
-</html>
+            const [dd, mm, hh, min] = [parts[2].substring(0,2), parts[2]
